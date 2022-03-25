@@ -6,29 +6,33 @@ import '../../request/request.dart';
 
 T? bodyDecoded<T>(Request<T> request, String stringBody, String? mimeType) {
   T? body;
-  var bodyToDecode;
+  try {
+    var bodyToDecode;
 
-  if (mimeType != null && mimeType.contains('application/json')) {
-    try {
-      bodyToDecode = jsonDecode(stringBody);
-    } on FormatException catch (_) {
-      Get.log('Cannot decode server response to json');
+    if (mimeType != null && mimeType.contains('application/json')) {
+      try {
+        bodyToDecode = jsonDecode(stringBody);
+      } on FormatException catch (_) {
+        Get.log('Cannot decode server response to json');
+        bodyToDecode = stringBody;
+      }
+    } else {
       bodyToDecode = stringBody;
     }
-  } else {
-    bodyToDecode = stringBody;
-  }
 
-  try {
-    if (stringBody == '') {
-      body = null;
-    } else if (request.decoder == null) {
-      body = bodyToDecode as T?;
-    } else {
-      body = request.decoder!(bodyToDecode);
+    try {
+      if (stringBody == '') {
+        body = null;
+      } else if (request.decoder == null) {
+        body = bodyToDecode as T?;
+      } else {
+        body = request.decoder!(bodyToDecode);
+      }
+    } on Exception catch (_) {
+      body = stringBody as T;
     }
-  } on Exception catch (_) {
-    body = stringBody as T;
+  } catch(e) {
+    // reamin to return null
   }
 
   return body;
